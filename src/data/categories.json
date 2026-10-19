@@ -1,0 +1,88 @@
+{
+  "case": [
+    {
+      "title": "Wire & Cable Applications",
+      "slug": "wire-cable-applications"
+    },
+    {
+      "title": "Forklift Safety Applications",
+      "slug": "forklift-safety-applications"
+    },
+    {
+      "title": "Truck Safety Applications",
+      "slug": "truck-safety-applications"
+    },
+    {
+      "title": "Excavator Safety Applications",
+      "slug": "excavator-safety-applications"
+    },
+    {
+      "title": "Bus Safety Applications",
+      "slug": "bus-safety-applications"
+    },
+    {
+      "title": "Mining Safety Applications",
+      "slug": "mining-safety-applications"
+    },
+    {
+      "title": "Marine Display Applications",
+      "slug": "marine-display-applications"
+    }
+  ],
+  "insights": [
+    {
+      "title": "International Logistics",
+      "slug": "insights-logistics"
+    },
+    {
+      "title": "Wire & Cable",
+      "slug": "insights-wire-cable"
+    },
+    {
+      "title": "Monitors",
+      "slug": "insights-monitors"
+    },
+    {
+      "title": "Cameras",
+      "slug": "insights-cameras"
+    },
+    {
+      "title": "MDVR",
+      "slug": "insights-mdvr"
+    },
+    {
+      "title": "SVM / AVM",
+      "slug": "insights-svm-avm"
+    }
+  ],
+  "solutions": [
+    {
+      "title": "Forklift Safety",
+      "slug": "forklift-safety-solutions"
+    },
+    {
+      "title": "Truck Safety",
+      "slug": "truck-safety-solutions"
+    },
+    {
+      "title": "Excavator Safety",
+      "slug": "excavator-safety-solutions"
+    },
+    {
+      "title": "Bus Safety",
+      "slug": "bus-safety-solutions"
+    },
+    {
+      "title": "Mining Safety",
+      "slug": "mining-safety-solutions"
+    },
+    {
+      "title": "Marine Display Solutions",
+      "slug": "marine-display-solutions"
+    },
+    {
+      "title": "Wire & Cable Solutions",
+      "slug": "wire-cable-solutions"
+    }
+  ]
+}
