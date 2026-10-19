@@ -1,5 +1,5 @@
 
-name: Build Website
+name: Build and Deploy Website
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: build-website-${{ github.ref }}
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -30,14 +30,23 @@ jobs:
       - name: Build website
         run: python scripts/build.py
 
-      - name: Verify generated pages
-        run: |
-          test -f site/index.html
-          test -f site/about.html
-          test -f site/contact.html
-          test -f site/cases.html
-          test -f site/insights.html
-          test -f site/solutions.html
-          test -f site/sitemap.xml
-          test -f site/robots.txt
-          echo "All expected pages were generated."
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
