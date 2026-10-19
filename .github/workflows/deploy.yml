@@ -1,0 +1,43 @@
+
+name: Build Website
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-website-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Build website
+        run: python scripts/build.py
+
+      - name: Verify generated pages
+        run: |
+          test -f site/index.html
+          test -f site/about.html
+          test -f site/contact.html
+          test -f site/cases.html
+          test -f site/insights.html
+          test -f site/solutions.html
+          test -f site/sitemap.xml
+          test -f site/robots.txt
+          echo "All expected pages were generated."
