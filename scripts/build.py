@@ -1,4 +1,3 @@
-
 from pathlib import Path
 from html import escape
 import json
@@ -8,6 +7,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 PAGES_DIR = ROOT / "src" / "pages"
+ARTICLES_DIR = ROOT / "src" / "articles"
 DATA_DIR = ROOT / "src" / "data"
 TEMPLATES_DIR = ROOT / "templates"
 ASSETS_DIR = ROOT / "assets"
@@ -125,29 +125,83 @@ def make_page(title, description, content, nav, footer, filename):
 """
 
 
-def make_category_content(group_key, title, slug):
+def make_category_content(group_key, title, articles):
     group = CATEGORY_INFO[group_key]
     safe_title = escape(title)
     safe_heading = escape(group["heading"])
     safe_intro = escape(group["intro"])
+
     parent_page = {
         "case": "cases.html",
         "insights": "insights.html",
         "solutions": "solutions.html",
     }[group_key]
 
+    if articles:
+        article_items = "\n".join(
+            f'<li><a href="{escape(item["filename"], quote=True)}">'
+            f'{escape(item["title"])}</a></li>'
+            for item in articles
+        )
+        article_section = f"""
+  <section class="content-section">
+    <h2>Articles</h2>
+    <ul>
+      {article_items}
+    </ul>
+  </section>
+"""
+    else:
+        article_section = """
+  <section class="content-section">
+    <h2>Articles</h2>
+    <p>New content will be added to this category as it becomes available.</p>
+  </section>
+"""
+
     return f"""
 <section class="hero category-page">
   <p class="page-kicker">{safe_heading}</p>
   <h1>{safe_title}</h1>
   <p class="lead">{safe_intro}</p>
-  <div class="content-card">
-    <h2>About this category</h2>
-    <p>This section is being developed with practical information and application-focused content. New material will be added as it becomes available.</p>
-    <p><a href="{parent_page}">Back to {safe_heading}</a></p>
-  </div>
+  {article_section}
+  <p><a href="{parent_page}">Back to {safe_heading}</a></p>
 </section>
 """
+
+
+def get_article_metadata(source, path):
+    title_match = re.search(
+        r"<h1\b[^>]*>(.*?)</h1>", source, re.I | re.S
+    )
+    category_match = re.search(
+        r"<strong>\s*Category:\s*</strong>\s*([^<]+)",
+        source,
+        re.I,
+    )
+    lead_match = re.search(
+        r'<p class=["\']lead["\'][^>]*>(.*?)</p>',
+        source,
+        re.I | re.S,
+    )
+
+    if not title_match:
+        raise ValueError(f"Article has no h1 title: {path}")
+
+    if not category_match:
+        raise ValueError(f"Article has no Category field: {path}")
+
+    title = re.sub(r"<[^>]+>", "", title_match.group(1)).strip()
+    category = category_match.group(1).strip()
+    description = (
+        re.sub(r"<[^>]+>", "", lead_match.group(1)).strip()
+        if lead_match else title
+    )
+
+    if not title or not category:
+        raise ValueError(f"Article title or category is empty: {path}")
+
+    return title, category, description
 
 
 def main():
@@ -173,9 +227,11 @@ def main():
             raise FileNotFoundError(f"Missing required asset: {required}")
 
     categories = json.loads(read_text(categories_path))
+
     for group_key in CATEGORY_INFO:
         if group_key not in categories:
             raise ValueError(f"Missing category group: {group_key}")
+
         for item in categories[group_key]:
             if not item.get("title") or not item.get("slug"):
                 raise ValueError(f"Invalid category item in group: {group_key}")
@@ -185,6 +241,7 @@ def main():
     footer = read_text(footer_path)
 
     generated = []
+    category_pages = {}
 
     # Build the six main pages.
     for filename, (fallback_title, fallback_description) in PAGE_INFO.items():
@@ -206,28 +263,89 @@ def main():
         generated.append(filename)
         print(f"Built: {output_path.relative_to(ROOT)}")
 
-    # Build all category pages from categories.json.
+    # Prepare category page records.
+    all_category_slugs = set()
+
+    for group_key in CATEGORY_INFO:
+        category_pages[group_key] = []
+
+        for item in categories[group_key]:
+            title = item["title"].strip()
+            slug = item["slug"].strip()
+
+            if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug):
+                raise ValueError(f"Invalid category slug: {slug}")
+
+            filename = f"{slug}.html"
+
+            if filename in PAGE_INFO or filename in all_category_slugs:
+                raise ValueError(f"Duplicate page filename: {filename}")
+
+            all_category_slugs.add(filename)
+            category_pages[group_key].append({
+                "title": title,
+                "slug": slug,
+                "filename": filename,
+            })
+
+    # Read article sources and match each article to an Insights category.
+    article_records = []
+    article_filenames = set()
+
+    if ARTICLES_DIR.is_dir():
+        for source_path in sorted(ARTICLES_DIR.glob("*.html")):
+            title, category, description = get_article_metadata(
+                read_text(source_path), source_path
+            )
+
+            filename = source_path.name
+
+            if filename in PAGE_INFO or filename in all_category_slugs:
+                raise ValueError(f"Article filename conflicts with another page: {filename}")
+
+            if filename in article_filenames:
+                raise ValueError(f"Duplicate article filename: {filename}")
+
+            matching_categories = [
+                item for item in category_pages["insights"]
+                if item["title"].casefold() == category.casefold()
+            ]
+
+            if not matching_categories:
+                raise ValueError(
+                    f"Article category '{category}' does not match an Insights "
+                    f"category in categories.json: {source_path.name}"
+                )
+
+            article_records.append({
+                "filename": filename,
+                "title": title,
+                "category": category,
+                "description": description,
+                "source_path": source_path,
+                "category_slug": matching_categories[0]["slug"],
+            })
+            article_filenames.add(filename)
+
+    # Build category pages, including the article lists.
     for group_key, items in categories.items():
         if group_key not in CATEGORY_INFO:
-            print(f"Skipping unknown category group: {group_key}")
             continue
 
         for item in items:
             title = item["title"].strip()
-            slug = item["slug"].strip()
+            filename = f'{item["slug"].strip()}.html'
 
-            if (
-                not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug)
-                or slug in PAGE_INFO
-            ):
-                raise ValueError(f"Invalid category slug: {slug}")
+            matching_articles = [
+                article for article in article_records
+                if group_key == "insights"
+                and article["category_slug"] == item["slug"]
+            ]
 
-            filename = f"{slug}.html"
-            description = (
-                f"{title}: practical information and application-focused "
-                f"content from Jacky Liu."
+            content = make_category_content(
+                group_key, title, matching_articles
             )
-            content = make_category_content(group_key, title, slug)
+            description = f"{title}: practical information and application-focused content from Jacky Liu."
 
             output_path = OUTPUT_DIR / filename
             output_path.write_text(
@@ -244,15 +362,34 @@ def main():
             generated.append(filename)
             print(f"Built: {output_path.relative_to(ROOT)}")
 
-    # Copy shared assets.
+    # Build standalone article pages.
+    for article in article_records:
+        content = read_text(article["source_path"])
+        output_path = OUTPUT_DIR / article["filename"]
+
+        output_path.write_text(
+            make_page(
+                article["title"],
+                article["description"],
+                content,
+                nav,
+                footer,
+                article["filename"],
+            ),
+            encoding="utf-8",
+        )
+        generated.append(article["filename"])
+        print(f"Built article: {output_path.relative_to(ROOT)}")
+
+    # Copy shared static assets.
     output_assets = OUTPUT_DIR / "assets"
     if output_assets.exists():
         shutil.rmtree(output_assets)
     shutil.copytree(ASSETS_DIR, output_assets)
 
-    # Generate sitemap for all generated pages.
+    # Generate sitemap for main pages, category pages, and articles.
     sitemap_entries = "\n".join(
-        f"  <url><loc>{SITE_URL}/{escape(filename)}</loc></url>"
+        f"  <url><loc>{escape(SITE_URL)}/{escape(filename)}</loc></url>"
         for filename in generated
     )
     sitemap = (
@@ -271,6 +408,7 @@ def main():
     (OUTPUT_DIR / "robots.txt").write_text(robots, encoding="utf-8")
 
     print(f"\nBuild completed: {len(generated)} pages generated.")
+    print(f"Articles built: {len(article_records)}")
     print(f"Output directory: {OUTPUT_DIR.relative_to(ROOT)}")
 
 
