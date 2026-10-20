@@ -1,5 +1,4 @@
 
-/* Shared site styles */
 :root {
   --color-ink: #172536;
   --color-muted: #627083;
@@ -21,6 +20,9 @@ html {
 
 body {
   margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   color: var(--color-ink);
   background: var(--color-paper);
   font-family: Arial, Helvetica, sans-serif;
@@ -45,12 +47,13 @@ img {
   height: auto;
 }
 
-/* Header and navigation */
+/* Header */
 .site-header {
   position: relative;
   z-index: 10;
+  flex-shrink: 0;
   border-bottom: 1px solid var(--color-line);
-  background: rgba(255, 255, 255, 0.98);
+  background: #fff;
 }
 
 .site-header__inner {
@@ -101,7 +104,7 @@ img {
   border: 1px solid var(--color-line);
   border-radius: 8px;
   background: #fff;
-  box-shadow: 0 14px 32px rgba(23, 37, 54, 0.10);
+  box-shadow: 0 14px 32px rgba(23, 37, 54, 0.1);
 }
 
 .nav-dropdown a {
@@ -137,7 +140,12 @@ img {
   border: 0;
 }
 
-/* Main page layout */
+/* Main layout: keep footer at the bottom on short pages */
+#main-content,
+.page-main {
+  flex: 1 0 auto;
+}
+
 .page-main {
   width: min(var(--content-width), calc(100% - 48px));
   min-height: 58vh;
@@ -205,7 +213,7 @@ p {
   margin-bottom: 0;
 }
 
-/* Article reading layout */
+/* Article layout */
 .article {
   width: 100%;
   max-width: var(--reading-width);
@@ -269,11 +277,7 @@ p {
   text-underline-offset: 3px;
 }
 
-.article strong {
-  font-weight: 700;
-}
-
-/* Cards and content lists */
+/* Cards */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -299,6 +303,8 @@ p {
 
 /* Footer */
 .site-footer {
+  flex-shrink: 0;
+  margin-top: auto;
   border-top: 1px solid var(--color-line);
   background: var(--color-soft);
 }
