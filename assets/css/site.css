@@ -900,3 +900,127 @@ p {
     min-height: 0;
   }
 }
+
+/* CASE library: modular layout */
+
+.case-module {
+  margin-top: 36px;
+  padding: 30px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.case-module-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+  margin-bottom: 28px;
+}
+
+.case-module-number {
+  display: flex;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--color-soft);
+  color: var(--color-accent);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.case-module-label {
+  margin: 0 0 8px;
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+.case-module-heading h2 {
+  margin: 0 0 10px;
+}
+
+.case-module-heading div > p:last-child {
+  max-width: 720px;
+  margin-bottom: 0;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.case-subgrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.case-subcard {
+  display: flex;
+  min-height: 150px;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: var(--color-paper);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.case-subcard:hover {
+  border-color: var(--color-accent);
+  background: var(--color-soft);
+}
+
+.case-subcard-number {
+  margin-bottom: 18px;
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+}
+
+.case-subcard h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.case-subcard p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+@media (max-width: 820px) {
+  .case-module {
+    padding: 22px;
+  }
+
+  .case-subgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .case-module {
+    padding: 18px;
+  }
+
+  .case-module-heading {
+    gap: 14px;
+  }
+
+  .case-module-number {
+    width: 42px;
+    height: 42px;
+    font-size: 15px;
+  }
+
+  .case-subgrid {
+    grid-template-columns: 1fr;
+  }
+}
