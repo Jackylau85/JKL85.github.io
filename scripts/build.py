@@ -1,3 +1,4 @@
+
 from pathlib import Path
 from html import escape
 import json
@@ -71,7 +72,6 @@ def extract_content(source, fallback_title, fallback_description):
         source,
         re.I | re.S,
     )
-
     title = (
         re.sub(r"\s+", " ", title_match.group(1)).strip()
         if title_match else fallback_title
@@ -80,7 +80,6 @@ def extract_content(source, fallback_title, fallback_description):
         description_match.group(1).strip()
         if description_match else fallback_description
     )
-
     body_match = re.search(
         r"<body\b[^>]*>(.*?)</body\s*>", source, re.I | re.S
     )
@@ -101,7 +100,7 @@ def extract_content(source, fallback_title, fallback_description):
 
 def make_page(title, description, content, nav, footer, filename):
     canonical_url = f"{SITE_URL}/{filename}"
-
+    page_class = filename.removesuffix(".html")
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -115,7 +114,7 @@ def make_page(title, description, content, nav, footer, filename):
 </head>
 <body>
   {nav}
-  <main id="main-content">
+  <main id="main-content" class="page-main page-main--{escape(page_class, quote=True)}">
     {content}
   </main>
   {footer}
@@ -187,7 +186,6 @@ def get_article_metadata(source, path):
 
     if not title_match:
         raise ValueError(f"Article has no h1 title: {path}")
-
     if not category_match:
         raise ValueError(f"Article has no Category field: {path}")
 
@@ -214,7 +212,6 @@ def main():
 
     nav_path = TEMPLATES_DIR / "nav.html"
     footer_path = TEMPLATES_DIR / "footer.html"
-
     for required in (nav_path, footer_path):
         if not required.is_file():
             raise FileNotFoundError(f"Missing required template: {required}")
@@ -227,7 +224,6 @@ def main():
             raise FileNotFoundError(f"Missing required asset: {required}")
 
     categories = json.loads(read_text(categories_path))
-
     for group_key in CATEGORY_INFO:
         if group_key not in categories:
             raise ValueError(f"Missing category group: {group_key}")
@@ -254,7 +250,6 @@ def main():
             fallback_title,
             fallback_description,
         )
-
         output_path = OUTPUT_DIR / filename
         output_path.write_text(
             make_page(title, description, content, nav, footer, filename),
@@ -268,7 +263,6 @@ def main():
 
     for group_key in CATEGORY_INFO:
         category_pages[group_key] = []
-
         for item in categories[group_key]:
             title = item["title"].strip()
             slug = item["slug"].strip()
@@ -280,7 +274,6 @@ def main():
 
             if filename in PAGE_INFO or filename in all_category_slugs:
                 raise ValueError(f"Duplicate page filename: {filename}")
-
             all_category_slugs.add(filename)
             category_pages[group_key].append({
                 "title": title,
@@ -301,8 +294,9 @@ def main():
             filename = source_path.name
 
             if filename in PAGE_INFO or filename in all_category_slugs:
-                raise ValueError(f"Article filename conflicts with another page: {filename}")
-
+                raise ValueError(
+                    f"Article filename conflicts with another page: {filename}"
+                )
             if filename in article_filenames:
                 raise ValueError(f"Duplicate article filename: {filename}")
 
@@ -310,7 +304,6 @@ def main():
                 item for item in category_pages["insights"]
                 if item["title"].casefold() == category.casefold()
             ]
-
             if not matching_categories:
                 raise ValueError(
                     f"Article category '{category}' does not match an Insights "
@@ -341,12 +334,13 @@ def main():
                 if group_key == "insights"
                 and article["category_slug"] == item["slug"]
             ]
-
             content = make_category_content(
                 group_key, title, matching_articles
             )
-            description = f"{title}: practical information and application-focused content from Jacky Liu."
-
+            description = (
+                f"{title}: practical information and application-focused "
+                f"content from Jacky Liu."
+            )
             output_path = OUTPUT_DIR / filename
             output_path.write_text(
                 make_page(
@@ -366,7 +360,6 @@ def main():
     for article in article_records:
         content = read_text(article["source_path"])
         output_path = OUTPUT_DIR / article["filename"]
-
         output_path.write_text(
             make_page(
                 article["title"],
