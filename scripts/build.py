@@ -1,6 +1,6 @@
 
 from pathlib import Path
-from html.parser import HTMLParser
+from html import escape
 import json
 import re
 import shutil
@@ -8,6 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 PAGES_DIR = ROOT / "src" / "pages"
+DATA_DIR = ROOT / "src" / "data"
 TEMPLATES_DIR = ROOT / "templates"
 ASSETS_DIR = ROOT / "assets"
 OUTPUT_DIR = ROOT / "site"
@@ -15,18 +16,45 @@ OUTPUT_DIR = ROOT / "site"
 SITE_URL = "https://jackylau85.github.io/JKL85.github.io"
 
 PAGE_INFO = {
-    "index.html": ("Jacky Liu | Vehicle Monitor, Vehicle Safety & SVM / AVM",
-                   "Jacky Liu's professional website covering vehicle displays, vehicle safety, SVM, AVM, cameras, wire and cable, and international logistics."),
-    "about.html": ("About | Jacky Liu",
-                   "Learn about Jacky Liu's experience in international logistics, wire and cable products, and vehicle electronics."),
-    "contact.html": ("Contact | Jacky Liu",
-                     "Contact Jacky Liu to discuss vehicle displays, vehicle safety applications, and potential business cooperation."),
-    "cases.html": ("Case Studies | Jacky Liu",
-                   "Application cases involving vehicle displays, wire and cable, and vehicle safety systems."),
-    "insights.html": ("Insights | Jacky Liu",
-                      "Practical insights on vehicle monitors, cameras, MDVR, SVM, AVM, wire and cable, and international logistics."),
-    "solutions.html": ("Solutions | Jacky Liu",
-                       "Vehicle and industrial display solutions for commercial vehicles, machinery, marine applications, and safety systems."),
+    "index.html": (
+        "Jacky Liu | Vehicle Monitor, Vehicle Safety & SVM / AVM",
+        "Jacky Liu's professional website covering vehicle displays, vehicle safety, SVM, AVM, cameras, wire and cable, and international logistics.",
+    ),
+    "about.html": (
+        "About | Jacky Liu",
+        "Learn about Jacky Liu's experience in international logistics, wire and cable products, and vehicle electronics.",
+    ),
+    "contact.html": (
+        "Contact | Jacky Liu",
+        "Contact Jacky Liu to discuss vehicle displays, vehicle safety applications, and potential business cooperation.",
+    ),
+    "cases.html": (
+        "Case Studies | Jacky Liu",
+        "Application cases involving vehicle displays, wire and cable, and vehicle safety systems.",
+    ),
+    "insights.html": (
+        "Insights | Jacky Liu",
+        "Practical insights on vehicle monitors, cameras, MDVR, SVM, AVM, wire and cable, and international logistics.",
+    ),
+    "solutions.html": (
+        "Solutions | Jacky Liu",
+        "Vehicle and industrial display solutions for commercial vehicles, machinery, marine applications, and safety systems.",
+    ),
+}
+
+CATEGORY_INFO = {
+    "case": {
+        "heading": "Case Studies",
+        "intro": "Explore application areas and practical challenges involving vehicle systems, industrial equipment, and wire and cable.",
+    },
+    "insights": {
+        "heading": "Insights",
+        "intro": "Practical articles about product selection, installation, troubleshooting, and real-world commercial vehicle applications.",
+    },
+    "solutions": {
+        "heading": "Solutions",
+        "intro": "Explore application-focused approaches for commercial vehicles, industrial machinery, marine displays, and connectivity.",
+    },
 }
 
 
@@ -35,13 +63,13 @@ def read_text(path):
 
 
 def extract_content(source, fallback_title, fallback_description):
-    """Accept either a content fragment or a complete HTML document."""
     title_match = re.search(
         r"<title[^>]*>(.*?)</title>", source, re.I | re.S
     )
     description_match = re.search(
         r'<meta\s+name=["\']description["\']\s+content=["\'](.*?)["\']',
-        source, re.I | re.S
+        source,
+        re.I | re.S,
     )
 
     title = (
@@ -63,29 +91,27 @@ def extract_content(source, fallback_title, fallback_description):
             r"<!doctype[^>]*>|</?html\b[^>]*>|</?head\b[^>]*>|"
             r"<meta\b[^>]*>|<title\b[^>]*>.*?</title>|"
             r"<link\b[^>]*>|<script\b[^>]*>.*?</script>",
-            "", source, flags=re.I | re.S
+            "",
+            source,
+            flags=re.I | re.S,
         ).strip()
 
     return title, description, content
 
 
-def make_page(title, description, content, nav, footer):
-    # Escape metadata so special characters cannot break HTML attributes.
-    from html import escape
-
-    safe_title = escape(title, quote=False)
-    safe_description = escape(description, quote=True)
+def make_page(title, description, content, nav, footer, filename):
+    canonical_url = f"{SITE_URL}/{filename}"
 
     return f"""<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{safe_title}</title>
-  <meta name="description" content="{safe_description}">
+  <title>{escape(title)}</title>
+  <meta name="description" content="{escape(description, quote=True)}">
   <meta name="robots" content="index,follow">
   <link rel="stylesheet" href="assets/css/site.css">
-  <link rel="canonical" href="{SITE_URL}/">
+  <link rel="canonical" href="{escape(canonical_url, quote=True)}">
 </head>
 <body>
   {nav}
@@ -99,9 +125,38 @@ def make_page(title, description, content, nav, footer):
 """
 
 
+def make_category_content(group_key, title, slug):
+    group = CATEGORY_INFO[group_key]
+    safe_title = escape(title)
+    safe_heading = escape(group["heading"])
+    safe_intro = escape(group["intro"])
+    parent_page = {
+        "case": "cases.html",
+        "insights": "insights.html",
+        "solutions": "solutions.html",
+    }[group_key]
+
+    return f"""
+<section class="hero category-page">
+  <p class="page-kicker">{safe_heading}</p>
+  <h1>{safe_title}</h1>
+  <p class="lead">{safe_intro}</p>
+  <div class="content-card">
+    <h2>About this category</h2>
+    <p>This section is being developed with practical information and application-focused content. New material will be added as it becomes available.</p>
+    <p><a href="{parent_page}">Back to {safe_heading}</a></p>
+  </div>
+</section>
+"""
+
+
 def main():
     if not PAGES_DIR.is_dir():
         raise FileNotFoundError(f"Missing pages directory: {PAGES_DIR}")
+
+    categories_path = DATA_DIR / "categories.json"
+    if not categories_path.is_file():
+        raise FileNotFoundError(f"Missing categories file: {categories_path}")
 
     nav_path = TEMPLATES_DIR / "nav.html"
     footer_path = TEMPLATES_DIR / "footer.html"
@@ -117,11 +172,21 @@ def main():
         if not required.is_file():
             raise FileNotFoundError(f"Missing required asset: {required}")
 
+    categories = json.loads(read_text(categories_path))
+    for group_key in CATEGORY_INFO:
+        if group_key not in categories:
+            raise ValueError(f"Missing category group: {group_key}")
+        for item in categories[group_key]:
+            if not item.get("title") or not item.get("slug"):
+                raise ValueError(f"Invalid category item in group: {group_key}")
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     nav = read_text(nav_path)
     footer = read_text(footer_path)
 
     generated = []
+
+    # Build the six main pages.
     for filename, (fallback_title, fallback_description) in PAGE_INFO.items():
         source_path = PAGES_DIR / filename
         if not source_path.is_file():
@@ -135,21 +200,59 @@ def main():
 
         output_path = OUTPUT_DIR / filename
         output_path.write_text(
-            make_page(title, description, content, nav, footer),
+            make_page(title, description, content, nav, footer, filename),
             encoding="utf-8",
         )
         generated.append(filename)
         print(f"Built: {output_path.relative_to(ROOT)}")
 
-    # Copy shared static assets into the generated site.
+    # Build all category pages from categories.json.
+    for group_key, items in categories.items():
+        if group_key not in CATEGORY_INFO:
+            print(f"Skipping unknown category group: {group_key}")
+            continue
+
+        for item in items:
+            title = item["title"].strip()
+            slug = item["slug"].strip()
+
+            if (
+                not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug)
+                or slug in PAGE_INFO
+            ):
+                raise ValueError(f"Invalid category slug: {slug}")
+
+            filename = f"{slug}.html"
+            description = (
+                f"{title}: practical information and application-focused "
+                f"content from Jacky Liu."
+            )
+            content = make_category_content(group_key, title, slug)
+
+            output_path = OUTPUT_DIR / filename
+            output_path.write_text(
+                make_page(
+                    title,
+                    description,
+                    content,
+                    nav,
+                    footer,
+                    filename,
+                ),
+                encoding="utf-8",
+            )
+            generated.append(filename)
+            print(f"Built: {output_path.relative_to(ROOT)}")
+
+    # Copy shared assets.
     output_assets = OUTPUT_DIR / "assets"
     if output_assets.exists():
         shutil.rmtree(output_assets)
     shutil.copytree(ASSETS_DIR, output_assets)
 
-    # Generate a basic sitemap for the six pages built above.
+    # Generate sitemap for all generated pages.
     sitemap_entries = "\n".join(
-        f"  <url><loc>{SITE_URL}/{filename}</loc></url>"
+        f"  <url><loc>{SITE_URL}/{escape(filename)}</loc></url>"
         for filename in generated
     )
     sitemap = (
