@@ -72,6 +72,7 @@ def extract_content(source, fallback_title, fallback_description):
         source,
         re.I | re.S,
     )
+
     title = (
         re.sub(r"\s+", " ", title_match.group(1)).strip()
         if title_match else fallback_title
@@ -80,9 +81,11 @@ def extract_content(source, fallback_title, fallback_description):
         description_match.group(1).strip()
         if description_match else fallback_description
     )
+
     body_match = re.search(
         r"<body\b[^>]*>(.*?)</body\s*>", source, re.I | re.S
     )
+
     if body_match:
         content = body_match.group(1).strip()
     else:
@@ -101,6 +104,7 @@ def extract_content(source, fallback_title, fallback_description):
 def make_page(title, description, content, nav, footer, filename):
     canonical_url = f"{SITE_URL}/{filename}"
     page_class = filename.removesuffix(".html")
+
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -136,6 +140,74 @@ def make_category_content(group_key, title, articles):
         "solutions": "solutions.html",
     }[group_key]
 
+    # Special layout for the Monitors article category.
+    # Other category pages keep their original layout.
+    if (
+        group_key == "insights"
+        and title.strip().casefold() == "monitors"
+    ):
+        article_cards = []
+
+        for item in articles:
+            article_title = escape(item["title"])
+            article_filename = escape(item["filename"], quote=True)
+            article_description = escape(item.get("description", ""))
+
+            article_cards.append(f"""
+              <article class="monitor-article-card">
+                <p class="monitor-article-label">MONITORS</p>
+                <h3>{article_title}</h3>
+                <p class="monitor-article-description">
+                  {article_description}
+                </p>
+                <a class="monitor-article-link"
+                   href="{article_filename}">
+                  Read Article <span aria-hidden="true">&rarr;</span>
+                </a>
+              </article>
+            """)
+
+        if article_cards:
+            cards_html = "\n".join(article_cards)
+        else:
+            cards_html = """
+              <p>New monitor articles will be added soon.</p>
+            """
+
+        return f"""
+        <div class="monitor-category">
+          <section class="monitor-category-hero">
+            <p class="page-kicker">INSIGHTS / MONITORS</p>
+            <h1>Vehicle Monitor Insights</h1>
+            <p class="monitor-category-intro">
+              Practical guidance on vehicle monitor selection,
+              installation, troubleshooting, and real-world use.
+            </p>
+            <p class="monitor-category-meta">
+              Product Knowledge / Troubleshooting / Applications
+            </p>
+          </section>
+
+          <section class="monitor-articles-section">
+            <div class="monitor-section-heading">
+              <p class="page-kicker">ARTICLES</p>
+              <h2>Monitor Guides</h2>
+              <p>
+                Practical answers to common vehicle monitor problems.
+              </p>
+            </div>
+
+            <div class="monitor-article-grid">
+              {cards_html}
+            </div>
+
+            <p class="monitor-back-link">
+              <a href="insights.html">&larr; Back to Insights</a>
+            </p>
+          </section>
+        </div>
+        """
+
     if articles:
         article_items = "\n".join(
             f'<li><a href="{escape(item["filename"], quote=True)}">'
@@ -143,30 +215,32 @@ def make_category_content(group_key, title, articles):
             for item in articles
         )
         article_section = f"""
-  <section class="content-section">
-    <h2>Articles</h2>
-    <ul>
-      {article_items}
-    </ul>
-  </section>
-"""
+        <section class="content-section">
+          <h2>Articles</h2>
+          <ul>
+            {article_items}
+          </ul>
+        </section>
+        """
     else:
         article_section = """
-  <section class="content-section">
-    <h2>Articles</h2>
-    <p>New content will be added to this category as it becomes available.</p>
-  </section>
-"""
+        <section class="content-section">
+          <h2>Articles</h2>
+          <p>
+            New content will be added to this category as it becomes available.
+          </p>
+        </section>
+        """
 
     return f"""
-<section class="hero category-page">
-  <p class="page-kicker">{safe_heading}</p>
-  <h1>{safe_title}</h1>
-  <p class="lead">{safe_intro}</p>
-  {article_section}
-  <p><a href="{parent_page}">Back to {safe_heading}</a></p>
-</section>
-"""
+    <section class="hero category-page">
+      <p class="page-kicker">{safe_heading}</p>
+      <h1>{safe_title}</h1>
+      <p class="lead">{safe_intro}</p>
+      {article_section}
+      <p><a href="{parent_page}">Back to {safe_heading}</a></p>
+    </section>
+    """
 
 
 def get_article_metadata(source, path):
@@ -191,6 +265,7 @@ def get_article_metadata(source, path):
 
     title = re.sub(r"<[^>]+>", "", title_match.group(1)).strip()
     category = category_match.group(1).strip()
+
     description = (
         re.sub(r"<[^>]+>", "", lead_match.group(1)).strip()
         if lead_match else title
@@ -208,29 +283,39 @@ def main():
 
     categories_path = DATA_DIR / "categories.json"
     if not categories_path.is_file():
-        raise FileNotFoundError(f"Missing categories file: {categories_path}")
+        raise FileNotFoundError(
+            f"Missing categories file: {categories_path}"
+        )
 
     nav_path = TEMPLATES_DIR / "nav.html"
     footer_path = TEMPLATES_DIR / "footer.html"
+
     for required in (nav_path, footer_path):
         if not required.is_file():
-            raise FileNotFoundError(f"Missing required template: {required}")
+            raise FileNotFoundError(
+                f"Missing required template: {required}"
+            )
 
     for required in (
         ASSETS_DIR / "css" / "site.css",
         ASSETS_DIR / "js" / "site.js",
     ):
         if not required.is_file():
-            raise FileNotFoundError(f"Missing required asset: {required}")
+            raise FileNotFoundError(
+                f"Missing required asset: {required}"
+            )
 
     categories = json.loads(read_text(categories_path))
+
     for group_key in CATEGORY_INFO:
         if group_key not in categories:
             raise ValueError(f"Missing category group: {group_key}")
 
         for item in categories[group_key]:
             if not item.get("title") or not item.get("slug"):
-                raise ValueError(f"Invalid category item in group: {group_key}")
+                raise ValueError(
+                    f"Invalid category item in group: {group_key}"
+                )
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     nav = read_text(nav_path)
@@ -240,21 +325,36 @@ def main():
     category_pages = {}
 
     # Build the six main pages.
-    for filename, (fallback_title, fallback_description) in PAGE_INFO.items():
+    for filename, (
+        fallback_title,
+        fallback_description,
+    ) in PAGE_INFO.items():
         source_path = PAGES_DIR / filename
+
         if not source_path.is_file():
-            raise FileNotFoundError(f"Missing page source: {source_path}")
+            raise FileNotFoundError(
+                f"Missing page source: {source_path}"
+            )
 
         title, description, content = extract_content(
             read_text(source_path),
             fallback_title,
             fallback_description,
         )
+
         output_path = OUTPUT_DIR / filename
         output_path.write_text(
-            make_page(title, description, content, nav, footer, filename),
+            make_page(
+                title,
+                description,
+                content,
+                nav,
+                footer,
+                filename,
+            ),
             encoding="utf-8",
         )
+
         generated.append(filename)
         print(f"Built: {output_path.relative_to(ROOT)}")
 
@@ -263,6 +363,7 @@ def main():
 
     for group_key in CATEGORY_INFO:
         category_pages[group_key] = []
+
         for item in categories[group_key]:
             title = item["title"].strip()
             slug = item["slug"].strip()
@@ -273,8 +374,12 @@ def main():
             filename = f"{slug}.html"
 
             if filename in PAGE_INFO or filename in all_category_slugs:
-                raise ValueError(f"Duplicate page filename: {filename}")
+                raise ValueError(
+                    f"Duplicate page filename: {filename}"
+                )
+
             all_category_slugs.add(filename)
+
             category_pages[group_key].append({
                 "title": title,
                 "slug": slug,
@@ -297,13 +402,17 @@ def main():
                 raise ValueError(
                     f"Article filename conflicts with another page: {filename}"
                 )
+
             if filename in article_filenames:
-                raise ValueError(f"Duplicate article filename: {filename}")
+                raise ValueError(
+                    f"Duplicate article filename: {filename}"
+                )
 
             matching_categories = [
                 item for item in category_pages["insights"]
                 if item["title"].casefold() == category.casefold()
             ]
+
             if not matching_categories:
                 raise ValueError(
                     f"Article category '{category}' does not match an Insights "
@@ -318,6 +427,7 @@ def main():
                 "source_path": source_path,
                 "category_slug": matching_categories[0]["slug"],
             })
+
             article_filenames.add(filename)
 
     # Build category pages, including the article lists.
@@ -334,13 +444,16 @@ def main():
                 if group_key == "insights"
                 and article["category_slug"] == item["slug"]
             ]
+
             content = make_category_content(
                 group_key, title, matching_articles
             )
+
             description = (
                 f"{title}: practical information and application-focused "
                 f"content from Jacky Liu."
             )
+
             output_path = OUTPUT_DIR / filename
             output_path.write_text(
                 make_page(
@@ -353,6 +466,7 @@ def main():
                 ),
                 encoding="utf-8",
             )
+
             generated.append(filename)
             print(f"Built: {output_path.relative_to(ROOT)}")
 
@@ -360,6 +474,7 @@ def main():
     for article in article_records:
         content = read_text(article["source_path"])
         output_path = OUTPUT_DIR / article["filename"]
+
         output_path.write_text(
             make_page(
                 article["title"],
@@ -371,13 +486,16 @@ def main():
             ),
             encoding="utf-8",
         )
+
         generated.append(article["filename"])
         print(f"Built article: {output_path.relative_to(ROOT)}")
 
     # Copy shared static assets.
     output_assets = OUTPUT_DIR / "assets"
+
     if output_assets.exists():
         shutil.rmtree(output_assets)
+
     shutil.copytree(ASSETS_DIR, output_assets)
 
     # Generate sitemap for main pages, category pages, and articles.
@@ -385,20 +503,27 @@ def main():
         f"  <url><loc>{escape(SITE_URL)}/{escape(filename)}</loc></url>"
         for filename in generated
     )
+
     sitemap = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         f"{sitemap_entries}\n"
         "</urlset>\n"
     )
-    (OUTPUT_DIR / "sitemap.xml").write_text(sitemap, encoding="utf-8")
+
+    (OUTPUT_DIR / "sitemap.xml").write_text(
+        sitemap, encoding="utf-8"
+    )
 
     robots = (
         "User-agent: *\n"
         "Allow: /\n"
         f"Sitemap: {SITE_URL}/sitemap.xml\n"
     )
-    (OUTPUT_DIR / "robots.txt").write_text(robots, encoding="utf-8")
+
+    (OUTPUT_DIR / "robots.txt").write_text(
+        robots, encoding="utf-8"
+    )
 
     print(f"\nBuild completed: {len(generated)} pages generated.")
     print(f"Articles built: {len(article_records)}")
