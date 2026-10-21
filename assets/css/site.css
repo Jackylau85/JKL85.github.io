@@ -1610,3 +1610,308 @@ p {
     font-size: 20px;
   }
 }
+
+/* =========================================
+   SHARED CATEGORY PAGE DESIGN
+   Insights / Solutions / Case Studies
+   ========================================= */
+
+/* Full-width category page layout */
+.page-main:has(.category-layout) {
+  width: 100%;
+  max-width: none;
+  min-height: 58vh;
+  margin: 0;
+  padding: 0;
+  color: #172b46;
+  background: #fff;
+}
+
+/* Individual page layout wrapper */
+.category-layout {
+  --category-navy: #102b50;
+  --category-blue: #1769aa;
+  --category-muted: #64748b;
+  --category-border: #e0e8f1;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Blue hero banner */
+.category-layout .category-hero {
+  width: 100%;
+  margin: 0;
+  padding: 76px max(7%, calc((100% - 1120px) / 2)) 68px;
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    #102b50 0%,
+    #174b7c 58%,
+    #246a9b 100%
+  );
+}
+
+.category-layout .category-hero .page-kicker {
+  margin: 0 0 18px;
+  color: #b8dafa;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+.category-layout .category-hero h1 {
+  max-width: 800px;
+  margin: 0 0 20px;
+  color: #fff;
+  font-size: clamp(36px, 5vw, 54px);
+  line-height: 1.12;
+  letter-spacing: -1.2px;
+}
+
+.category-layout .category-hero-intro {
+  max-width: 720px;
+  margin: 0;
+  color: #e3edf8;
+  font-size: 18px;
+  line-height: 1.8;
+}
+
+.category-layout .category-hero-meta {
+  margin: 28px 0 0;
+  color: #b8dafa;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  line-height: 1.8;
+}
+
+/* Main content section */
+.category-layout .category-content-section {
+  width: min(1120px, 86%);
+  margin: 0 auto;
+  padding: 64px 0 76px;
+}
+
+.category-layout .category-section-heading {
+  max-width: 760px;
+  margin: 0 0 30px;
+}
+
+.category-layout .category-section-heading .page-kicker {
+  margin: 0 0 10px;
+  color: #2872aa;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.category-layout .category-section-heading h2 {
+  margin: 0 0 12px;
+  color: #142b46;
+  font-size: clamp(28px, 3vw, 36px);
+  line-height: 1.25;
+  letter-spacing: -0.6px;
+}
+
+.category-layout .category-section-heading > p:last-child {
+  margin: 0;
+  color: var(--category-muted);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+/* Independent article and overview cards */
+.category-layout .category-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 24px;
+}
+
+.category-layout .category-card {
+  display: flex;
+  min-width: 0;
+  min-height: 260px;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0;
+  padding: 30px;
+  border: 1px solid var(--category-border);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(18, 43, 70, 0.05);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.category-layout .category-card:hover {
+  border-color: #b7d1e8;
+  box-shadow: 0 14px 34px rgba(18, 43, 70, 0.1);
+  transform: translateY(-3px);
+}
+
+.category-layout .category-card-label {
+  align-self: flex-start;
+  margin: 0 0 18px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  color: #235f91;
+  background: #eaf3fb;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  line-height: 1.5;
+}
+
+.category-layout .category-card h3 {
+  margin: 0 0 14px;
+  color: #17314f;
+  font-size: 21px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.category-layout .category-card-description {
+  margin: 0 0 16px;
+  color: #617186;
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.category-layout .category-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: auto;
+  padding-top: 16px;
+  color: #1769a6;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.category-layout .category-card-link:hover {
+  color: #0b416f;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.category-layout .category-back-link {
+  margin: 36px 0 0;
+}
+
+.category-layout .category-back-link a {
+  color: #52667c;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.category-layout .category-back-link a:hover {
+  color: #1769a6;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Different page groups can be styled independently */
+.category-layout--insights .category-card-label {
+  color: #235f91;
+  background: #eaf3fb;
+}
+
+.category-layout--solutions .category-card-label {
+  color: #28684f;
+  background: #e9f5ee;
+}
+
+.category-layout--case .category-card-label {
+  color: #805b24;
+  background: #fbf2df;
+}
+
+/* Tablet */
+@media (max-width: 820px) {
+  .category-layout .category-hero {
+    padding: 56px 7% 50px;
+  }
+
+  .category-layout .category-content-section {
+    width: 86%;
+    padding: 48px 0 58px;
+  }
+
+  .category-layout .category-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .category-layout .category-card {
+    min-height: 240px;
+    padding: 24px;
+  }
+
+  .category-layout .category-card h3 {
+    font-size: 19px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 560px) {
+  .category-layout .category-hero {
+    padding: 44px 6% 40px;
+  }
+
+  .category-layout .category-hero h1 {
+    font-size: 34px;
+    letter-spacing: -0.7px;
+  }
+
+  .category-layout .category-hero-intro {
+    font-size: 16px;
+    line-height: 1.8;
+  }
+
+  .category-layout .category-hero-meta {
+    margin-top: 22px;
+    font-size: 10px;
+    letter-spacing: 0.8px;
+  }
+
+  .category-layout .category-content-section {
+    width: 88%;
+    padding: 38px 0 48px;
+  }
+
+  .category-layout .category-section-heading {
+    margin-bottom: 22px;
+  }
+
+  .category-layout .category-section-heading h2 {
+    font-size: 27px;
+  }
+
+  .category-layout .category-section-heading > p:last-child {
+    font-size: 15px;
+  }
+
+  .category-layout .category-card-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .category-layout .category-card {
+    min-height: 0;
+    padding: 23px;
+  }
+
+  .category-layout .category-card h3 {
+    font-size: 20px;
+  }
+
+  .category-layout .category-back-link {
+    margin-top: 28px;
+  }
+}
