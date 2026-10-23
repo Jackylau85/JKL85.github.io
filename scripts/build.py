@@ -88,7 +88,6 @@ def extract_content(source, fallback_title, fallback_description):
         source,
         re.I | re.S,
     )
-
     title = (
         re.sub(r"\s+", " ", title_match.group(1)).strip()
         if title_match
@@ -106,7 +105,6 @@ def extract_content(source, fallback_title, fallback_description):
         source,
         re.I | re.S,
     )
-
     if body_match:
         content = body_match.group(1).strip()
     else:
@@ -125,7 +123,6 @@ def extract_content(source, fallback_title, fallback_description):
 def make_page(title, description, content, nav, footer, filename):
     canonical_url = f"{SITE_URL}/{filename}"
     page_class = filename.removesuffix(".html")
-
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -133,6 +130,7 @@ def make_page(title, description, content, nav, footer, filename):
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{escape(title)}</title>
     <meta name="description" content="{escape(description, quote=True)}">
+    <meta name="google-site-verification" content="abnIQ4DbnXRIUjk7ZIBuCqvfxGSKfjfWziwOYjHces4" />
     <meta name="robots" content="index,follow">
     <link rel="stylesheet" href="assets/css/site.css">
     <link rel="canonical" href="{escape(canonical_url, quote=True)}">
@@ -163,7 +161,6 @@ def make_category_content(group_key, title, articles):
     }[group_key]
 
     cards = []
-
     # Insights pages display a separate card for each article.
     if group_key == "insights":
         for item in articles:
@@ -175,7 +172,6 @@ def make_category_content(group_key, title, articles):
             article_description = escape(
                 item.get("description", "")
             )
-
             cards.append(
                 f"""
                 <article class="category-card">
@@ -189,12 +185,11 @@ def make_category_content(group_key, title, articles):
                     <a class="category-card-link"
                        href="{article_filename}">
                         Read Article
-                        <span aria-hidden="true">→</span>
+                        <span aria-hidden="true">&rarr;</span>
                     </a>
                 </article>
                 """
             )
-
     if cards:
         cards_html = "\n".join(cards)
 
@@ -209,14 +204,12 @@ def make_category_content(group_key, title, articles):
                 "Practical information, product knowledge, "
                 "and real-world applications."
             )
-
     else:
         section_title = f"{safe_title} Overview"
         section_intro = (
             f"Explore practical information and application "
             f"considerations related to {safe_title}."
         )
-
         cards_html = f"""
             <article class="category-card">
                 <p class="category-card-label">
@@ -232,7 +225,6 @@ def make_category_content(group_key, title, articles):
                 </p>
             </article>
         """
-
     return f"""
         <div class="category-layout category-layout--{group_key}">
             <section class="category-hero">
@@ -245,7 +237,6 @@ def make_category_content(group_key, title, articles):
                 <p class="category-hero-intro">
                     {safe_intro}
                 </p>
-
                 <p class="category-hero-meta">
                     PRODUCT KNOWLEDGE / APPLICATIONS / PRACTICAL INSIGHTS
                 </p>
@@ -257,14 +248,13 @@ def make_category_content(group_key, title, articles):
                     <h2>{section_title}</h2>
                     <p>{section_intro}</p>
                 </div>
-
                 <div class="category-card-grid">
                     {cards_html}
                 </div>
 
                 <p class="category-back-link">
                     <a href="{parent_page}">
-                        ← Back to {safe_heading}
+                        &larr; Back to {safe_heading}
                     </a>
                 </p>
             </section>
@@ -278,7 +268,6 @@ def get_article_metadata(source, path):
         source,
         re.I | re.S,
     )
-
     category_match = re.search(
         r"<strong>\s*Category:\s*</strong>\s*([^<]+)",
         source,
@@ -300,7 +289,6 @@ def get_article_metadata(source, path):
         raise ValueError(
             f"Article has no Category field: {path}"
         )
-
     title = re.sub(
         r"<[^>]+>",
         "",
@@ -342,7 +330,6 @@ def main():
 
     nav_path = TEMPLATES_DIR / "nav.html"
     footer_path = TEMPLATES_DIR / "footer.html"
-
     for required in (nav_path, footer_path):
         if not required.is_file():
             raise FileNotFoundError(
@@ -359,7 +346,6 @@ def main():
             )
 
     categories = json.loads(read_text(categories_path))
-
     for group_key in CATEGORY_INFO:
         if group_key not in categories:
             raise ValueError(
@@ -373,7 +359,6 @@ def main():
                 )
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
     nav = read_text(nav_path)
     footer = read_text(footer_path)
 
@@ -391,7 +376,6 @@ def main():
             raise FileNotFoundError(
                 f"Missing page source: {source_path}"
             )
-
         title, description, content = extract_content(
             read_text(source_path),
             fallback_title,
@@ -411,7 +395,6 @@ def main():
             ),
             encoding="utf-8",
         )
-
         generated.append(filename)
         print(f"Built: {output_path.relative_to(ROOT)}")
 
@@ -424,7 +407,6 @@ def main():
         for item in categories[group_key]:
             title = item["title"].strip()
             slug = item["slug"].strip()
-
             if not re.fullmatch(
                 r"[a-z0-9]+(?:-[a-z0-9]+)*",
                 slug,
@@ -442,7 +424,6 @@ def main():
                 raise ValueError(
                     f"Duplicate page filename: {filename}"
                 )
-
             all_category_slugs.add(filename)
 
             category_pages[group_key].append({
@@ -454,7 +435,6 @@ def main():
     # Read article sources and match each article to an Insights category.
     article_records = []
     article_filenames = set()
-
     if ARTICLES_DIR.is_dir():
         for source_path in sorted(ARTICLES_DIR.glob("*.html")):
             title, category, description = get_article_metadata(
@@ -463,7 +443,6 @@ def main():
             )
 
             filename = source_path.name
-
             if (
                 filename in PAGE_INFO
                 or filename in all_category_slugs
@@ -477,7 +456,6 @@ def main():
                 raise ValueError(
                     f"Duplicate article filename: {filename}"
                 )
-
             matching_categories = [
                 item
                 for item in category_pages["insights"]
@@ -490,7 +468,6 @@ def main():
                     "an Insights category in categories.json: "
                     f"{source_path.name}"
                 )
-
             article_records.append({
                 "filename": filename,
                 "title": title,
@@ -501,7 +478,6 @@ def main():
             })
 
             article_filenames.add(filename)
-
     # Build category pages, including article lists.
     for group_key, items in categories.items():
         if group_key not in CATEGORY_INFO:
@@ -510,7 +486,6 @@ def main():
         for item in items:
             title = item["title"].strip()
             filename = f'{item["slug"].strip()}.html'
-
             matching_articles = [
                 article
                 for article in article_records
@@ -525,7 +500,6 @@ def main():
                 title,
                 matching_articles,
             )
-
             description = (
                 f"{title}: practical information and "
                 "application-focused content from Jacky Liu."
@@ -544,7 +518,6 @@ def main():
                 ),
                 encoding="utf-8",
             )
-
             generated.append(filename)
             print(f"Built: {output_path.relative_to(ROOT)}")
 
@@ -552,7 +525,6 @@ def main():
     for article in article_records:
         content = read_text(article["source_path"])
         output_path = OUTPUT_DIR / article["filename"]
-
         output_path.write_text(
             make_page(
                 article["title"],
@@ -572,7 +544,6 @@ def main():
 
     # Copy shared static assets.
     output_assets = OUTPUT_DIR / "assets"
-
     if output_assets.exists():
         shutil.rmtree(output_assets)
 
@@ -583,7 +554,6 @@ def main():
         f"  <url><loc>{escape(SITE_URL)}/{escape(filename)}</loc></url>"
         for filename in generated
     )
-
     sitemap = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -606,7 +576,6 @@ def main():
         robots,
         encoding="utf-8",
     )
-
     print(
         f"\nBuild completed: {len(generated)} pages generated."
     )
