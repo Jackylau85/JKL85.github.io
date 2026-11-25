@@ -1,5 +1,5 @@
 from pathlib import Path
-from html import escape
+from html import escape, unescape
 import json
 import re
 import shutil
@@ -295,7 +295,7 @@ def get_article_metadata(source, path):
         title_match.group(1),
     ).strip()
 
-    category = category_match.group(1).strip()
+    category = unescape(category_match.group(1).strip())
 
     description = (
         re.sub(
